@@ -1,2 +1,3 @@
 # Construct_Networks
-Scripts for constructing gene and metabolite networks
+Scripts for constructing gene and metabolite networks.
+
