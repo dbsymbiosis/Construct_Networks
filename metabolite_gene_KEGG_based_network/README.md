@@ -54,6 +54,42 @@ R="rn00290"
 
 
 
+
+# TODO
+
+## 5. Download inchikey info
+1. contains names + mol weights for compounds
+2. `https://pubchem.ncbi.nlm.nih.gov/#input_type=list&query=87RUtrVM0PDn2tLDULub7eE1ilWctyTsXsk_oEXYLaFFwRE&collection=compound&alias=MeSH%3A%20MeSH%20Tree`
+`OR`
+2. `https://pubchem.ncbi.nlm.nih.gov/classification/#hid=84`
+3. Click on `Download` on right hand side.
+4. Under the `Summary (Search Results)` section select `GZip` and then click the `CSV` button.
+
+New we can extract `inchikeys` and there associated `name` and `mol weight` 
+Will need this to link `inchikeys` with KEGG reaction network `compounds`
+
+## 6. Extract MAGI compound annotations
+Extract metabolite annotations from `magi_compound_results.csv`. A single input metabolite can have multiple annotated inchikeys
+NOTE: When running MAGI you need to include a `feature` column in the input metabolite data file otherwise you cant easily link the compound annotations back to your original annotations. 
+
+Extract `original_compound`, `feature` (metabolite ID) columns from `magi_compound_results.csv`
+NOTE: a compound can have multiple annotated `inchikeys`
+
+## 7. Link inchikey to `feature`
+Link the `original_compound` (which is an inchikey) and `feature` (metabolite ID) info we got from the `magi_compound_results.csv` file with the associated `name` and `mol weight` we extracted in Step 1
+
+## 8. Extract MAGI gene annotation
+Extract the reaction(s) each gene is annotated with from the `magi_gene_results.csv` file.
+NOTE: a gene can have multiple annotated reactions.
+
+## 9. Link annotated metabolites and genes to KEGG Reaction paths
+The nodes in the KEGG Reaction network created in Step 4 can be annotated with gene and metabolite IDs.
+That way we can then traceback the expression patterns of the genes or accumulation patterns of the metabolites at each node in the network. 
+Cant see an obvious way to link inchikeys and compounds other then using there mol weights. 
+
 ```
 ./match_compound_to_known_molWeight.py --known <(awk -F'\t' '$4=="compound" {print $5"\t"$3}' test_data/rn00290.nodes.txt) --unknown test_data/unknown.txt --known_col 1 --unknown_col 2 -o test_data/test.matches.txt
 ```
+
+
+
