@@ -1,0 +1,11 @@
+--2021-03-12 12:24:39--  http://rest.kegg.jp/get/rn00290/kgml
+Resolving rest.kegg.jp (rest.kegg.jp)... 133.103.200.27
+Connecting to rest.kegg.jp (rest.kegg.jp)|133.103.200.27|:80... connected.
+HTTP request sent, awaiting response... 200 OK
+Length: unspecified [text/xml]
+Saving to: ‘STDOUT’
+
+     0K .......... .......... ....                             73.4K=0.3s
+
+2021-03-12 12:24:40 (73.4 KB/s) - written to stdout [25423]
+

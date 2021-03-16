@@ -1,0 +1,25 @@
+L-Threonine	119	119.0582	L-Threonine
+D-erythro-3-Methylmalate	148	148.0372	(R)-2-Methylmalate
+2-Methylmaleate	131.0266	131.0946	L-Leucine
+(R)-2-Methylmalate--BIG	248.0372
+Acetyl-CoA	809.1258	809.1258	Acetyl-CoA
+Pyruvate	88.016	88.016	Pyruvate
+2-Oxobutanoate	102.0317	102.0317	2-Oxobutanoate
+(S)-2-Aceto-2-hydroxybutanoate	146.0579	146.0579	(R)-3-Hydroxy-3-methyl-2-oxopentanoate
+(R)-3-Hydroxy-3-methyl-2-oxopentanoate--1	144.0579	146.0579	(R)-3-Hydroxy-3-methyl-2-oxopentanoate
+(R)-3-Hydroxy-3-methyl-2-oxopentanoate--2	146.1579	146.0579	(R)-3-Hydroxy-3-methyl-2-oxopentanoate
+(R)-3-Hydroxy-3-methyl-2-oxopentanoate--3	147.05	148.0372	(R)-2-Methylmalate
+(R)-2,3-Dihydroxy-3-methylpentanoate	148.0736	148.0736	(R)-2,3-Dihydroxy-3-methylpentanoate
+(S)-3-Methyl-2-oxopentanoic acid	130.063	130.063	4-Methyl-2-oxopentanoate
+L-Isoleucine	131.0946	131.0946	L-Leucine
+L-Valine	117.079	117.079	L-Valine
+3-Methyl-2-oxobutanoic acid	116.0473	116.0473	3-Methyl-2-oxobutanoic acid
+(R)-2,3-Dihydroxy-3-methylbutanoate	134.0579	134.0579	(R)-2,3-Dihydroxy-3-methylbutanoate
+3-Hydroxy-3-methyl-2-oxobutanoic acid	132.0423	132.0423	(S)-2-Acetolactate
+(S)-2-Acetolactate	132.0423	132.0423	(S)-2-Acetolactate
+alpha-Isopropylmalate	176.0685	176.0685	(2R,3S)-3-Isopropylmalate
+2-Isopropylmaleate	158.0579	158.0579	2-Isopropylmaleate
+(2R,3S)-3-Isopropylmalate	176.0685	176.0685	(2R,3S)-3-Isopropylmalate
+(2S)-2-Isopropyl-3-oxosuccinate	174.0528	174.0528	(2S)-2-Isopropyl-3-oxosuccinate
+4-Methyl-2-oxopentanoate	130.063	130.063	4-Methyl-2-oxopentanoate
+L-Leucine	131.0946	131.0946	L-Leucine

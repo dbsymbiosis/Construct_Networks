@@ -93,3 +93,68 @@ Cant see an obvious way to link inchikeys and compounds other then using there m
 
 
 
+
+# Metabolite-gene network construction using KEGG pathways v2
+
+## 1. Run MAGI2
+First step is to run MAGI2 localy using your metabolite and gene information. 
+Need to use MAGI2 **NOT** MAGI1 becuase MAGI2 uses Retrorules, MAGI1 uses rhea & metacyc and is much harder to connect to KEGG pathways. 
+
+NOTE: When running MAGI you need to include a `feature` column in the input metabolite data file otherwise you cant easily link the compound annotations back to your original annotations.
+
+## 2. Setup env
+Load conda environment using the below command
+```
+conda env create -f environment.yml
+conda activate networks
+```
+## 3. Download working data
+Download mapping files to link InChiKeys with KEGG compounds, and to link Retrorules reaction IDs with KEGG EC numbers.
+```
+mkdir -p data; cd data
+wget https://magi.nersc.gov/files/processed/unique_compounds.csv.gz
+wget https://retrorules.org/dl/retrorules_dump -O retrorules_dump.tar.gz
+tar -zxvf retrorules_dump.tar.gz
+```
+
+## 4. Filter `magi_gene_results.csv`
+
+
+
+## 5. Filter `magi_compound_results.csv`
+
+
+
+## 6. KEGG Reaction network to Cytoscape style format
+
+Download a KEGG Reaction network in `KGML` format and expract edge and node info.
+Script will fetch `Name`, `Enzyme`, or `Exact mass` for a given reaction/compound/map link
+
+```
+R="rn00290"
+./scripts/KEGG_reaction_KGML_to_network_format.py -x <(wget "http://rest.kegg.jp/get/$R/kgml" -O - -o "test_data/$R.wget.log") --edges test_data/$R.edges.txt --nodes test_data/$R.nodes.txt
+```
+
+`Nodes` either a compound (metabolite), reaction (enzyme/gene), or link to another KEGG map.
+ - `node_id` id of target node
+ - `kegg_id` id of node in KEDD database (can be compound [cpd], reactiopn [rn/rc] or map [path] ids)
+ - `name` compound name, reaction EC number, or map name
+ - `type` compound/reaction/map
+ - `info` compound 'Exact mass'; 'NA' if reaction or map
+ - `link` link to kegg.jp site for the given compound/reaction/map
+ - `x` node x coords for visualization
+ - `y` node y coords for visualization
+ - `width` node width for visualization
+ - `height` node height for visualization
+ - `shape` nade shape for visualization
+`Edges` undirected connection between two `nodes`
+        `node_1` reaction or map link node id
+        `node_2` compount node id
+
+
+```
+R="rn00290"
+./scripts/KEGG_reaction_KGML_to_network_format.py -x <(wget "http://rest.kegg.jp/get/$R/kgml" -O - -o "test_data/$R.wget.log") --edges test_data/$R.edges.txt --nodes test_data/$R.nodes.txt
+```
+
+
