@@ -10,7 +10,7 @@ R packages needed:
 ## 2. Run GeneCoNet.R script 
 
 ```
-Rscript GeneCoNet.R metabolites_file samplesInfo_file timepoint treatment1 treatment2
+Rscript GeneCoNet.R TPM_matrix diffExprGenes timepoint
 ```
 
 

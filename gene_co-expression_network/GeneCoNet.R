@@ -8,40 +8,31 @@ DESCRIPTION="
 Construct metabolite co-expression network.
 
 ## Example:
-Rscript GeneCoNet.R expression_matrix samplesInfo_file timepoint treatment1 treatment2
+Rscript GeneCoNet.R TPM_matrix diffExprGenes timepoint
 
-# expression_matrix (tab delimited; header line required, sample IDs should match the 'Sample.ID' columns in samplesInfo_file):
-groupId,goodPeakCount,medMz,medRt,maxQuality,compoundId,ATAC_2wk_1058,ATAC_2wk_1455,ATAC_2wk_1499
-1,5,156.001175,1.182,0.738764,156.001175@1.181877,145133.81,89625.4,94933.16
-2,3,133.014267,16.027,0.756112,133.014267@16.027122,57118.36,14854.14,22026.89
-3,41,132.867844,6.946,0.718885,132.867844@6.945603,128486.34,182182.98,176913.56
-4,3,201.037231,6.186,0.784493,201.037231@6.186069,0,0,0
+# TPM_matrix (tab delimited; TPM values for each gene across samples of interest):
+Name	T1	T1	T2	T2	T3	T3
+gene1	51.7	54.8	68.4	164.4	150.3	121.3
+gene2	0.0	0.0	1.1	129.9	155.4	101.6
+gene3	1000.3	1025.9	1236.8	2005.6	6038.7	3384.1
 ..
 ..
 
-# samplesInfo_file (comma delimited; 'Sample.ID', 'Weight', 'Time' and 'Treatment' headers required):
-Sample.ID,Time,TP,Weight,Species,Treatment
-ATAC_12wk_1103,12wk,T11,140,Pacuta,ATAC
-ATAC_12wk_2306,12wk,T11,150,Pacuta,ATAC
-ATAC_12wk_1777,12wk,T11,130,Pacuta,ATAC
-ATAC_24hrs_1059,24hrs,T5,240,Pacuta,ATHC
-ATAC_24hrs_1757,24hrs,T5,190,Pacuta,ATHC
-ATAC_24hrs_1563,24hrs,T5,300,Pacuta,ATHC
-ATAC_2wk_1047,2wk,T7,190,Pacuta,HTHC
+# diffExprGenes (list of differentially expressed genes):
+gene1
+gene2
+gene3
 ..
 ..
 
 # timepoint
-Time point from sampleInfo_file to run test on (e.g. T5)
-
-# treatment1 & treatment2
-The two 'Treatment' IDs from sampleInfo_file to use for differential accumulation testing (e.g. ATAC ATHC)
+Time point from TPM_matrix to extract (e.g. T2)
 
 
 # Output files:
-metabolites_file.cor.txt - network edges
+timepoint.corData.txt - network edges
 
-metabolites_file.modules.txt - network modules
+timepoint.modules.txt - network modules
 
 "
 
