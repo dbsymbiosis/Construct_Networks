@@ -49,8 +49,7 @@ def main():
 
 
 
-def scrape_rheaDB(RHEA_IDs, outfile):
-	stop_on_invalid_url = False
+def scrape_rheaDB(RHEA_IDs, outfile, stop_on_invalid_url = False):
 	
 	for RHEA_ID in RHEA_IDs:
 		RHEA_ID = RHEA_ID.strip()

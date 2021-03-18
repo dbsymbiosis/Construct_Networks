@@ -1,31 +1,6 @@
 #!/usr/bin/env python2
 DESCRIPTION = '''
-Takes a file with compound molecular weights and matches them to the closes molecular weight from a set of known mol weights.
-Will only match a unknown metabolite to a known metabolite if the difference between the molecular weights is <= 5 (max difference allowed).
-
-## Input files
-# unknonwn.txt (set '--unknown_col 2' as mol weights are in 2nd column)
-m1	109.00
-m2	89.23
-m3	342.96
-m4	509.21
-..
-..
-
-# known.txt (set '--known_col 2' as mol weights are in 2nd column)
-ATP	507.18
-Pyruvate	88.06
-..
-..
-
-## Output
-m1	109.00
-m2	89.23	Pyruvate	88.06
-m3	342.96
-m4	509.21	ATP	507.18
-..
-..
-
+Description which will be diplayed in the useage.
 '''
 import sys
 import os
@@ -37,25 +12,29 @@ import gzip
 def main():
 	## Pass command line arguments. 
 	parser = argparse.ArgumentParser(formatter_class=argparse.RawDescriptionHelpFormatter, description=DESCRIPTION)
-	parser.add_argument('--unknown', metavar='unknown.txt', 
-		required=True, type=lambda x: File(x, 'r'), 
-		help='Input [gzip] file with unknown mol weights (required)'
-	)
-	parser.add_argument('--known', metavar='known.txt',
-		required=True, type=lambda x: File(x, 'r'),
-		help='Input [gzip] file with known mol weights (required)'
+	parser.add_argument('-i', '--input', metavar='input.txt', 
+		required=False, default=sys.stdin, type=lambda x: File(x, 'r'), 
+		help='Input [gzip] file (default: stdin)'
 	)
 	parser.add_argument('-o', '--out', metavar='output.txt', 
 		required=False, default=sys.stdout, type=lambda x: File(x, 'w'), 
 		help='Output [gzip] file (default: stdout)'
 	)
-	parser.add_argument('--unknown_col', 
-		required=True, metavar=2, type=int, 
-		help='Column (1-based) to find unknown mol weights in (required)'
+        parser.add_argument('-b', '--bam', metavar='aligned_reads.bam', 
+		required=False, type=argparse.FileType('r'), 
+		help='Aligned reads (default: %(default)s)'
 	)
-	parser.add_argument('--known_col',
-		required=True, metavar=2, type=int,
-		help='Column (1-based) to find known mol weights in (required)'
+	parser.add_argument('-p', '--info', metavar='output.info.txt', 
+		required=False, type=argparse.FileType('w'), 
+		help='Output info file (default: %(default)s)'
+	)
+	parser.add_argument('-s', '--str', 
+		required=False, default='s', type=str, 
+		help='String (default: %(default)s)'
+	)
+	parser.add_argument('-n', '--num', 
+		required=False, default=0, type=int, 
+		help='Number (default: %(default)s)'
 	)
 	parser.add_argument('--debug', 
 		required=False, action='store_true', 
@@ -64,6 +43,8 @@ def main():
 	args = parser.parse_args()
 	
 	## Set up basic debugger
+	#logFormat = "%(asctime)s - %(funcName)s - %(message)s"
+	#logFormat = "%(asctime)s [%(levelname)s]: %(message)s"
 	logFormat = "[%(levelname)s]: %(message)s"
 	logging.basicConfig(format=logFormat, stream=sys.stderr, level=logging.INFO)
 	if args.debug:
@@ -72,68 +53,26 @@ def main():
 	logging.debug('%s', args) ## DEBUG
 	
 	
-	with args.unknown as unknown_file, args.known as known_file, args.out as out_file:
-		## Dont forget to change from 0-based to 1-based index
-		match_compound_to_known_molWeight(unknown_file, known_file, out_file, args.unknown_col-1, args.known_col-1)
-
-
-
-def match_compound_to_known_molWeight(unknown_file, known_file, out_file, unknown_col, known_col, 
-					max_diff=5.0, unknown_file_delim='\t', known_file_delim='\t'):
+	with args.input as infile, args.out as outfile:
+		for line in infile:
+			print line.strip()
+		print "Done printing"
 	
-	known = {}
-	for line in known_file:
-		line = line.rstrip('\n')
-		if not line or line.startswith('#'):
-			continue
-		
-		line_split = line.split(known_file_delim)
-		try:
-			molWeight = float(line_split[known_col])
-			known[molWeight] = line
-		except IndexError:
-			logging.info("ERROR: %s", line)
-			logging.info("ERROR: --known_col %s out of range for --known", known_col+1)
-			sys.exit(1)
-		except ValueError:
-			logging.info("ERROR: %s", line)
-			logging.info("ERROR: Can't change '%s' to float in --known", line_split[known_col])
-			sys.exit(1)
-	known_molWeights = known.keys()
 	
-	for line in unknown_file:
-		line = line.rstrip('\n')
-		if not line or line.startswith('#'):
-			continue
-		
-		line_split = line.split(unknown_file_delim)
-		try:
-			molWeight = float(line_split[unknown_col])
-		except IndexError:
-			logging.info("ERROR: %s", line)
-			logging.info("ERROR: --unknown_col %s out of range for --unknown", unknown_col+1)
-			sys.exit(1)
-		except ValueError:
-			logging.info("ERROR: %s", line)
-			logging.info("ERROR: Can't change '%s' to float in --unknown", line_split[unknown_col])
-			sys.exit(1)
-		
-		## Loop over known mol weights and find the closest
-		smallest_diff = 999999999 # Set super high so any difference is smaller
-		closest_known_MW = None
-		
-		logging.debug('Starting search with mol weight: %s', molWeight) ## DEBUG
-		for mw in known_molWeights:
-			diff = abs(molWeight-mw)
-			if diff < smallest_diff and diff <= max_diff:
-				smallest_diff = diff
-				closest_known_MW = mw
-				logging.debug('NEW: smallest diff (%s) and known mol weight (%s)', smallest_diff, closest_known_MW) ## DEBUG
-		logging.debug('Smallest diff found is %s and belongs to known mol weight %s', smallest_diff, closest_known_MW) ## DEBUG
-		if smallest_diff != 999999999:
-			out_file.write(line+'\t'+known[closest_known_MW]+'\n')
-		else:
-			out_file.write(line+'\n')
+	## Best to just use a with statement but if you need to operate on the object directly
+	
+	## Loop over file (need to uncomment __iter__() and close() in File class)
+	# for line in args.input:
+	#	print line.strip()
+	# args.input.close()
+	
+	## Close file handles (need to uncomment close() method in File class)
+	#args.input.close()
+	#args.out.close()
+	#if args.bam is not None:
+	#	args.bam.close()
+	#if args.info is not None:
+	#	args.info.close()
 
 
 
