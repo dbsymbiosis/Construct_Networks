@@ -1,2 +1,3 @@
-**/test_data/test.*
+**/test_data/**
+**/tests/__*
 test_data_big/
