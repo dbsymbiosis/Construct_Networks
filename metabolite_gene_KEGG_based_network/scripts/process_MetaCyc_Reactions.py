@@ -2,7 +2,19 @@
 DESCRIPTION = '''
 Takes a big table with all reactions from Meatcyc and reformats ID mappings so they are nicer to work with. 
 
-# Output:
+## Input file format (4 columns; expect header row).
+MetaCyc [tab] KEGG [tab] RHEA [tab] EC-Number
+...
+...
+FUCULOKIN-RXN [tab] <a href='http://www.genome.jp/dbget-bin/www_bget?rn:R03241'>R03241</a> [tab] <a href='http://www.rhea-db.org/reaction?id=12377'>12377</a> [tab] EC-2.7.1.51
+RXN-18453  [tab]      [tab]     [tab]    EC-1.14.99.M4
+RXN-11319  [tab] <a href='http://www.genome.jp/dbget-bin/www_bget?rn:R10246'>R10246</a> [tab] <a href='http://www.rhea-db.org/reaction?id=26364'>26364</a> [tab] EC-4.1.99.19
+...
+...
+
+NOTE: Multiple IDs are seperated by ' // '
+
+## Output:
 MetaCyc_ID [tab] KEGG_Reaction_IDs [tab] RHEA_IDs [tab] EC_Numbers
 
 KEGG_Reaction_IDs: Blank if no associated IDS, multiple IDs seperated by commas
@@ -49,18 +61,51 @@ def main():
 
 
 
-def process_MetaCyc_Reactions(metaCycFile, outfile):
+def process_MetaCyc_Reactions(metaCycFile, outfile, writeDelim=','):
 	'''
 	Takes a file detailing all the reactions in MetaCyc and cleans up the ID mappings.
+	
+	Expected File format: MetaCyc [tab] KEGG [tab] RHEA [tab] EC-Number
+	
 	'''
-	soup = BeautifulSoup("<a href='http://www.genome.jp/dbget-bin/www_bget?rn:R02585'>R02585</a>")
-	ID = soup.findAll("a")[0].text
-	pass
-
-
-
-
+	metaCycFile.next()
+	for line in metaCycFile:
+		line = line.strip('\n')
+		if not line or line.startswith('#'):
+			continue # Ignore blank or comment lines
 		
+		try:
+			MetaCyc, KEGG_raw, RHEA_raw, EC_Number_raw = line.split('\t')
+		except ValueError:
+			logging.error("Filed to split line into 4 columns: %s", line)
+			sys.exit(1)
+		
+		## Process IDS and write output
+		##	- Seperate IDs split by " // "
+		## 	- Also findAll each ID and iterate over each possible element.
+		
+		## KEGG IDs
+		KEGG = []
+		for IDs in KEGG_raw.split(' // '):
+			for ID in BeautifulSoup(IDs, 'html.parser').findAll("a"):
+				KEGG.append(ID.text)
+		KEGG_string = writeDelim.join(KEGG)
+		
+		## RHEA IDs
+		RHEA = []
+		for IDs in RHEA_raw.split(' // '):
+			for ID in BeautifulSoup(IDs, 'html.parser').findAll("a"):
+				RHEA.append('RHEA:'+ID.text)
+		RHEA_string = writeDelim.join(RHEA)
+		
+		## EC Numbers
+		EC_Number = []
+		for ID in EC_Number_raw.split(' // '):
+			EC_Number.append(ID)
+		EC_Number_string = writeDelim.join(EC_Number)
+		
+		## Write to output
+		outfile.write('{}\t{}\t{}\t{}\n'.format(MetaCyc, KEGG_string, RHEA_string, EC_Number_string))
 
 
 
