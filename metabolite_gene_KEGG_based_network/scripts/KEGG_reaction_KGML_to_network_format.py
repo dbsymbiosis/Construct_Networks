@@ -104,12 +104,12 @@ def KEGG_KGML_2_Cytoscape_network(kgml_file, edge_file, nodes_file):
 	## Write nodes to file
 	nodes_file.write('node_id\tkegg_id\tname\ttype\tinfo\tlink\tx\ty\twidth\theight\tshape\n')
 	for x in nodes:
-		nodes_file.write('\t'.join(x)+'\n')
+		nodes_file.write('\t'.join([str(y) for y in x])+'\n')
 	
 	## Write edges to file
 	edge_file.write('node_1\tnode_2\n')
 	for x in edges:
-		edge_file.write('\t'.join(x)+'\n')
+		edge_file.write('\t'.join([str(y) for y in x])+'\n')
 
 
 
@@ -124,16 +124,25 @@ def parse_entry(entry):
 	## Set defaults
 	x_loc = 0
 	y_loc = 0
-	width = 0
-	height = 0
+	width = 46
+	height = 17
 	shape = 'circle'
 	## Access 'graphics' tag in 'entry'
 	for x in entry:
+		logging.debug('%s %s', x.tag, x.attrib) ## DEBUG
 		if x.tag == 'graphics':
-			x_loc = x.attrib['x']
-			y_loc = x.attrib['y']
-			width = x.attrib['width']
-			height = x.attrib['height']
+			## Check if we are dealing with explicit x and y positions or a list of coords.
+			## If we are dealing with coords we should use the average as our x and y positions for plotting
+			if 'x' in x.attrib and 'y' in x.attrib:
+				x_loc = x.attrib['x']
+				y_loc = x.attrib['y']
+				width = x.attrib['width']
+				height = x.attrib['height']
+			else:
+				coords = x.attrib['coords']
+				coords = coords.split(',')
+				x_loc = sum([int(i) for i in coords[0::2]]) / len(coords[0::2])
+				y_loc = sum([int(i) for i in coords[1::2]]) / len(coords[1::2])
 			shape = x.attrib['type']
 	
 	####
@@ -158,8 +167,8 @@ def parse_entry(entry):
 	
 	## type="compound": Get "Name" (first if multiple) and "Exact mass" from KEGG database.
 	if entry.attrib['type'] == 'compound':
-		info = 'NA'
-		name = 'NA'
+		info = '-'
+		name = '-'
 		# Iterate over rows and check if we have found the correct rows.
 		for row in rows:
 			# Get value from 1st and second columns (or return blank values if split failed)
@@ -169,24 +178,29 @@ def parse_entry(entry):
 				name = row_value.split(';')[0]
 			elif row_name == 'Exact mass':
 				info = row_value
-		return [entry.attrib['id'], entry.attrib['name'], name, entry.attrib['type'], info, entry.attrib['link'], x_loc, y_loc, width, height, shape]
+		## KEGG compound ID examples: cpd:C02226 (need to lstrip "cpd:")
+		return [entry.attrib['id'], entry.attrib['name'].lstrip("cpd:"), name, entry.attrib['type'], info, entry.attrib['link'], x_loc, y_loc, width, height, shape]
 	
 	## type="reaction": Get "Enzyme" from KEGG database.
 	elif entry.attrib['type'] == 'reaction':
-		info = 'NA'
-		name = 'NA'
+		info = '-'
+		name = '-'
 		# Iterate over rows and check if we have found the correct rows (have to also strip \n and \xa0 characters from string).
 		for row in rows:
 			row_name = "" if len(row.findAll('th')) == 0 else row.findAll('th')[0].get_text().strip().replace(u'\xa0', u' ')
-			row_value = "" if len(row.findAll('td')) == 0 else row.findAll('td')[0].get_text().strip().replace(u'\xa0', u' ')
 			if row_name == 'Enzyme':
+				row_value = "" if len(row.findAll('td')) == 0 else row.findAll('td')[0].get_text().strip().replace(u'\xa0', u' ')
 				name = ';'.join(row_value.split()) # Remove large blocks of white space between multiple IDs
-		return [entry.attrib['id'], entry.attrib['name'], name, entry.attrib['type'], info, entry.attrib['link'], x_loc, y_loc, width, height, shape]
+			if row_name == 'Orthology':
+				row_value = "" if len(row.findAll('td')) == 0 else row.findAll('tr') # Get Orthology rows
+				info = ';'.join([x.get_text().strip().replace(u'\xa0', u' ').split(' ')[0] for x in row_value]) # Get row text, clean it, then split and take first work (which is 'K' ID)
+		## KEGG reaction ID examples: rn:R05071 rc:RC00837 (split by space and need to lstrip "rn:")
+		return [entry.attrib['id'], entry.attrib['name'].split(' ')[0].lstrip("rn:"), name, entry.attrib['type'], info, entry.attrib['link'], x_loc, y_loc, width, height, shape]
 	
 	## type="map": Get "Name" (first if multiple) from KEGG database.
 	elif entry.attrib['type'] == 'map':
-		info = "NA"
-		name = 'NA'
+		info = "-"
+		name = '-'
 		# Iterate over rows and check if we have found the correct rows.
 		for row in rows:
 			# Get value from 1st and second columns (or return blank values if split failed)
@@ -194,8 +208,8 @@ def parse_entry(entry):
 			row_value = "" if len(row.findAll('td')) == 0 else row.findAll('td')[0].get_text().strip().replace(u'\xa0', u' ')
 			if row_name == 'Name':
 				name = row_value.split(';')[0]
-
-		return [entry.attrib['id'], entry.attrib['name'], name, entry.attrib['type'], info, entry.attrib['link'], x_loc, y_loc, width, height, shape]
+		## KEGG pathway ID example: path:rn00290 (need to lstrip "path:")
+		return [entry.attrib['id'], entry.attrib['name'].lstrip('path:'), name, entry.attrib['type'], info, entry.attrib['link'], x_loc, y_loc, width, height, shape]
 	
 	## If we didnt account for something
 	else:
