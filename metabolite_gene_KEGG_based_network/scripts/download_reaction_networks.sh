@@ -27,8 +27,8 @@ do
         wget "http://rest.kegg.jp/get/$ID/kgml" -O "$NAME.kgml" -o "$NAME.wget.log"
 	if [ -s "$NAME.kgml" ]; then
         	"$SCRIPTPATH/KEGG_reaction_KGML_to_network_format.py" -x "$NAME.kgml" --edges "$NAME.edges.txt" --nodes "$NAME.nodes.txt"
-		awk -F'\t' -vNAME="$NAME" 'NR>1{print NAME$0}' "$NAME.nodes.txt" >> "$ALL_NODES"
-		awk -F'\t' -vNAME="$NAME" 'NR>1{print NAME$1"\t"NAME$2}' "$NAME.edges.txt" >> "$ALL_EDGES"
+		awk -F'\t' -vNAME="$NAME" 'NR>1{print NAME"__"$0}' "$NAME.nodes.txt" >> "$ALL_NODES"
+		awk -F'\t' -vNAME="$NAME" 'NR>1{print NAME"__"$1"\t__"NAME$2}' "$NAME.edges.txt" >> "$ALL_EDGES"
 	else
 		echo "   - No reaction network found!"
         	rm -f "$NAME.kgml" "$NAME.wget.log"
