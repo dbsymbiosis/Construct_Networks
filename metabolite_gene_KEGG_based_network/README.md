@@ -41,6 +41,12 @@ Multiple `KEGG_Reaction_IDs`, `Meatcyc_IDs`, `EC_Numbers` associated with the sa
 python ../scripts/prepare_MetaCyc_Reactions.py -i All_reactions_of_MetaCyc.txt.gz -o MetaCyc_2_KEGG_Reaction_mapping.txt.gz
 ```
 
+#### 0.4 Download KEGG Networks
+
+```
+scripts/download_reaction_networks.sh 1> download_reaction_networks.log 2>&1
+```
+Will create `KEGG_Pathway_Networks.nodes.txt` and `KEGG_Pathway_Networks.edges.txt` files in the `kgml/` directory. These files are the node and edge information needed in later steps. 
 
 ## 1. Run MAGI1
 First step is to run MAGI1 localy using your metabolite and gene information. 
