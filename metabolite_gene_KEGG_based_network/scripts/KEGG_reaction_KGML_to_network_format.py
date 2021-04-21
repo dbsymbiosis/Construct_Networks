@@ -146,8 +146,13 @@ def parse_entry(entry):
 			shape = x.attrib['type']
 	
 	####
-	#### Get info from jegg.jp link in 'entry'
+	#### Get info from kegg.jp link in 'entry'
 	####
+	## Stop if we dont have a link to work with. 
+	if 'link' not in entry.attrib.keys():
+		return [entry.attrib['id'], entry.attrib['name'], '-', entry.attrib['type'], '-', '-', x_loc, y_loc, width, height, shape]
+	
+	## Get info from link provided. 
 	url = entry.attrib['link']
 	html_text = requests.get(url).text
 	soup = BeautifulSoup(html_text, 'html.parser')
@@ -155,11 +160,11 @@ def parse_entry(entry):
 	## Get table(s) from html
 	table = soup.find(lambda tag: tag.name=='table')
 	
-	## Check that we actually found a table. If we didnt then we probabily used an incorrect URL
+	## Check that we actually found a table. If we dont then we probabily have an incorrect URL or the entry doesn't have the info we are after. 
 	if table is None:
-		logging.error('No table found. URL found in XML file might be incorrect?') ## ERROR
-		logging.error('URL found: %s', url) ## ERROR
-		sys.exit(1)
+		logging.info('No table found on KEGG website for entry "%s"', entry.attrib['name']) ## INFO
+		logging.info('URL: "%s"', url) ## INFO
+		return [entry.attrib['id'], entry.attrib['name'], '-', entry.attrib['type'], '-', '-', x_loc, y_loc, width, height, shape]
 	
 	## Split master table into rows (whole webpage is a table so we have to access table within a cell of a table)
 	master_rows = table.findAll(lambda tag: tag.name=='tr')
@@ -222,6 +227,7 @@ def parse_relation(relation):
 	## RETURNS: [node_1, node_2]
 	##   node_1: "reaction" node id
 	##   node_2: "compount" node id
+	compound_node_id = 'undefined'
 	for x in relation:
 		if x.tag == 'subtype':
 			compound_node_id = x.attrib['value']
