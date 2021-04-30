@@ -4,6 +4,8 @@ Takes a KEGG reaction KGML file and reformats it for network visulization using 
 
 NOTE:
 	- KEGG reaction maps have compounds as nodes and reactions as edges.
+	- Also adds 'gene' and 'ortholog' nodes.
+	- Nodes without edges will have self edges so Cytoscape will plot them
 '''
 import sys
 import os
@@ -100,7 +102,18 @@ def KEGG_KGML_2_Cytoscape_network(kgml_file, edge_file, nodes_file):
 					logging.debug("Reaction parsed and new edge added: %s", edge)
 		else:
 			logging.info('Found tag in xml file that we havent accounted for: %s', child.attrib) ## INFO
-		
+	
+	## Add edges for nodes without edges defined in KGML file.
+	all_edges = []
+	for x in edges:
+		all_edges.extend(x)
+	all_edges = set(all_edges)
+	
+	for n in nodes:
+		n_id = n[0]
+		if n_id not in all_edges:
+			edges.append([n_id, n_id]) # Add edge to self
+	
 	## Write nodes to file
 	nodes_file.write('node_id\tkegg_id\tname\ttype\tinfo\tlink\tx\ty\twidth\theight\tshape\n')
 	for x in nodes:
@@ -127,6 +140,9 @@ def parse_entry(entry):
 	width = 46
 	height = 17
 	shape = 'circle'
+	graphics_name = '-'
+	name = '-'
+	info = '-'
 	## Access 'graphics' tag in 'entry'
 	for x in entry:
 		logging.debug('%s %s', x.tag, x.attrib) ## DEBUG
@@ -138,11 +154,15 @@ def parse_entry(entry):
 				y_loc = x.attrib['y']
 				width = x.attrib['width']
 				height = x.attrib['height']
+				if 'name' in x.attrib.keys():
+					graphics_name = x.attrib['name']
 			else:
 				coords = x.attrib['coords']
 				coords = coords.split(',')
 				x_loc = sum([int(i) for i in coords[0::2]]) / len(coords[0::2])
 				y_loc = sum([int(i) for i in coords[1::2]]) / len(coords[1::2])
+				if 'name' in x.attrib.keys():
+					graphics_name = x.attrib['name']
 			shape = x.attrib['type']
 	
 	####
@@ -150,7 +170,7 @@ def parse_entry(entry):
 	####
 	## Stop if we dont have a link to work with. 
 	if 'link' not in entry.attrib.keys():
-		return [entry.attrib['id'], entry.attrib['name'], '-', entry.attrib['type'], '-', '-', x_loc, y_loc, width, height, shape]
+		return [entry.attrib['id'], entry.attrib['name'], name, entry.attrib['type'], info, '-', x_loc, y_loc, width, height, shape]
 	
 	## Get info from link provided. 
 	url = entry.attrib['link']
@@ -172,8 +192,6 @@ def parse_entry(entry):
 	
 	## type="compound": Get "Name" (first if multiple) and "Exact mass" from KEGG database.
 	if entry.attrib['type'] == 'compound':
-		info = '-'
-		name = '-'
 		# Iterate over rows and check if we have found the correct rows.
 		for row in rows:
 			# Get value from 1st and second columns (or return blank values if split failed)
@@ -188,8 +206,6 @@ def parse_entry(entry):
 	
 	## type="reaction": Get "Enzyme" from KEGG database.
 	elif entry.attrib['type'] == 'reaction':
-		info = '-'
-		name = '-'
 		# Iterate over rows and check if we have found the correct rows (have to also strip \n and \xa0 characters from string).
 		for row in rows:
 			row_name = "" if len(row.findAll('th')) == 0 else row.findAll('th')[0].get_text().strip().replace(u'\xa0', u' ')
@@ -204,8 +220,6 @@ def parse_entry(entry):
 	
 	## type="map": Get "Name" (first if multiple) from KEGG database.
 	elif entry.attrib['type'] == 'map':
-		info = "-"
-		name = '-'
 		# Iterate over rows and check if we have found the correct rows.
 		for row in rows:
 			# Get value from 1st and second columns (or return blank values if split failed)
@@ -215,6 +229,21 @@ def parse_entry(entry):
 				name = row_value.split(';')[0]
 		## KEGG pathway ID example: path:rn00290 (need to lstrip "path:")
 		return [entry.attrib['id'], entry.attrib['name'].lstrip('path:'), name, entry.attrib['type'], info, entry.attrib['link'], x_loc, y_loc, width, height, shape]
+	
+	## type="gene": Get "Name" (first if multiple) from KEGG database.
+	elif entry.attrib['type'] == 'gene':
+		return [entry.attrib['id'], entry.attrib['name'], graphics_name, entry.attrib['type'], info, entry.attrib['link'], x_loc, y_loc, width, height, shape]
+	
+	## type="ortholog": Get "Name" (first if multiple) from KEGG database.
+	elif entry.attrib['type'] == 'ortholog':
+		# Iterate over rows and check if we have found the correct rows.
+		for row in rows:
+			# Get value from 1st and second columns (or return blank values if split failed)
+			row_name = "" if len(row.findAll('th')) == 0 else row.findAll('th')[0].get_text().strip().replace(u'\xa0', u' ')
+			if row_name == 'Definition':
+				row_value = "" if len(row.findAll('td')) == 0 else row.findAll('td')[0].get_text().strip().replace(u'\xa0', u' ')
+				name = row_value
+		return [entry.attrib['id'], entry.attrib['name'], name, entry.attrib['type'], info, entry.attrib['link'], x_loc, y_loc, width, height, shape]
 	
 	## If we didnt account for something
 	else:

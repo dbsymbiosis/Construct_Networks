@@ -5,7 +5,7 @@ SCRIPTPATH=$(dirname "$SCRIPT") # Absolute path this script is in, thus /path/to
 
 ## Get all KEGG Reaction Networks
 DIR="kgml"
-mkdir -p "$DIR"; cd "$DIR"
+rm -fr "$DIR"; mkdir -p "$DIR"; cd "$DIR"
 
 ALL_NODES="KEGG_Pathway_Networks.nodes.txt"
 ALL_EDGES="KEGG_Pathway_Networks.edges.txt"
@@ -19,20 +19,45 @@ wget -O "KEGG_Pathway_Maps_br08901.keg" "https://www.genome.jp/kegg-bin/download
 awk '$1~"^C"' "KEGG_Pathway_Maps_br08901.keg" | sed -e 's/^C[ ]*//' -e 's/,//' -e 's/(//g' -e 's/)//g' -e 's@/@@g' -e 's@\\@@g' > "KEGG_Pathway_Maps_br08901_lvlC.txt"
 
 ## Get kgml reaction network file for each KEGG Pathway (if one exists)
-while read line;
-do
-        ID=$(echo "$line" | awk '{print "rn"$1}');
-        NAME=$(echo "$line" | sed -e 's/ /_/g');
-        echo "Processing $ID   $NAME";
-        wget "http://rest.kegg.jp/get/$ID/kgml" -O "$NAME.kgml" -o "$NAME.wget.log"
+download_network() {
+	DIR="${1}"; shift
+	ALL_NODES="${1}"; shift
+	ALL_EDGES="${1}"; shift
+	SCRIPTPATH="${1}"; shift
+	line="${@}"
+        ID=$(echo "$line" | awk '{print $1}')
+        NAME=$(echo "$line" | sed -e 's/ /_/g')
+	
+	# Print all info to log file
+	echo "Started processing $ID   $NAME"
+	exec 1> "${NAME}.processing.log" 2>&1
+        echo "## Processing $ID   $NAME"
+	
+        wget "http://rest.kegg.jp/get/rn${ID}/kgml" -O "$NAME.kgml" -o "$NAME.wget.log"
 	if [ -s "$NAME.kgml" ]; then
         	"$SCRIPTPATH/KEGG_reaction_KGML_to_network_format.py" -x "$NAME.kgml" --edges "$NAME.edges.txt" --nodes "$NAME.nodes.txt"
 		awk -F'\t' -vNAME="$NAME" 'NR>1{print NAME"__"$0}' "$NAME.nodes.txt" >> "$ALL_NODES"
-		awk -F'\t' -vNAME="$NAME" 'NR>1{print NAME"__"$1"\t__"NAME$2}' "$NAME.edges.txt" >> "$ALL_EDGES"
+		awk -F'\t' -vNAME="$NAME" 'NR>1{print NAME"__"$1"\t"NAME"__"$2}' "$NAME.edges.txt" >> "$ALL_EDGES"
 	else
-		echo "   - No reaction network found!"
+		echo "##    - No reaction network found!"
+		echo "##        - Searching for gene network."
         	rm -f "$NAME.kgml" "$NAME.wget.log"
+		
+		wget "http://rest.kegg.jp/get/hsa${ID}/kgml" -O "$NAME.kgml" -o "$NAME.wget.log"
+		if [ -s "$NAME.kgml" ]; then
+			"$SCRIPTPATH/KEGG_reaction_KGML_to_network_format.py" -x "$NAME.kgml" --edges "$NAME.edges.txt" --nodes "$NAME.nodes.txt"
+			awk -F'\t' -vNAME="$NAME" 'NR>1{print NAME"__"$0}' "$NAME.nodes.txt" >> "$ALL_NODES"
+			awk -F'\t' -vNAME="$NAME" 'NR>1{print NAME"__"$1"\t"NAME"__"$2}' "$NAME.edges.txt" >> "$ALL_EDGES"
+		else
+			echo "##    - No gene network found!"
+			echo "##        - Giving up :("
+			rm -f "$NAME.kgml" "$NAME.wget.log"
+		fi
 	fi
-done < "KEGG_Pathway_Maps_br08901_lvlC.txt"
+	echo "## Done $ID   $NAME"
+}
 
-echo; echo "Done processing networks!"
+export -f download_network
+parallel -j 12 download_network "$DIR" "$ALL_NODES" "$ALL_EDGES" "$SCRIPTPATH" :::: "KEGG_Pathway_Maps_br08901_lvlC.txt"
+
+echo ""; echo "Done processing networks!"
