@@ -43,10 +43,18 @@ python ../scripts/prepare_MetaCyc_Reactions.py -i All_reactions_of_MetaCyc.txt.g
 
 #### 0.4 Download KEGG Networks
 
+The below command will create `KEGG_Pathway_Networks.nodes.txt` and `KEGG_Pathway_Networks.edges.txt` files in the `kgml/` directory. These files are the node and edge information needed in later steps.
 ```
-scripts/download_reaction_networks.sh 1> download_reaction_networks.log 2>&1
+../scripts/download_reaction_networks.sh 1> download_reaction_networks.log 2>&1
 ```
-Will create `KEGG_Pathway_Networks.nodes.txt` and `KEGG_Pathway_Networks.edges.txt` files in the `kgml/` directory. These files are the node and edge information needed in later steps. 
+
+Convert the edges [node1 <-> node2] file into a nnf formatted edge file.
+```
+awk -F'\t' 'NR>1 {split($1,a,"__"); print "KEGG\t"a[1]"__"a[2]}' kgml/KEGG_Pathway_Networks.edges.txt | uniq > KEGG_Pathway_Networks.edges.nnf
+awk -F'\t' 'NR>1 {split($1,a,"__"); if ($1==$2) {print a[1]"__"a[2]"\t"$1} else {print a[1]"__"a[2]"\t"$1"\tflow\t"$2} }' kgml/KEGG_Pathway_Networks.edges.txt >> KEGG_Pathway_Networks.edges.nnf
+cp kgml/KEGG_Pathway_Networks.edges.txt .
+cp kgml/KEGG_Pathway_Networks.nodes.txt .
+```
 
 ## 1. Run MAGI1
 First step is to run MAGI1 localy using your metabolite and gene information. 
