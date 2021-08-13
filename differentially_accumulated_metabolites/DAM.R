@@ -4,12 +4,9 @@ DESCRIPTION="
 ##
 ## DESCRIPTION
 ##
-
 R script to identify metabolites that are differentially accumulated at a specific timepoint between two conditions.
-
 ## Example:
 Rscript DAM.R metabolites_file samplesInfo_file output_file timepoint treatment1 treatment2
-
 # metabolites_file (comma delimited; header line required, sample IDs should match the 'Sample.ID' columns in samplesInfo_file):
 groupId,goodPeakCount,medMz,medRt,maxQuality,compoundId,ATAC_2wk_1058,ATAC_2wk_1455,ATAC_2wk_1499
 1,5,156.001175,1.182,0.738764,156.001175@1.181877,145133.81,89625.4,94933.16
@@ -18,7 +15,6 @@ groupId,goodPeakCount,medMz,medRt,maxQuality,compoundId,ATAC_2wk_1058,ATAC_2wk_1
 4,3,201.037231,6.186,0.784493,201.037231@6.186069,0,0,0
 ..
 ..
-
 # samplesInfo_file (comma delimited; 'Sample.ID', 'Weight', 'Time' and 'Treatment' headers required):
 Sample.ID,Time,TP,Weight,Species,Treatment
 ATAC_12wk_1103,12wk,T11,140,Pacuta,ATAC
@@ -30,18 +26,13 @@ ATAC_24hrs_1563,24hrs,T5,300,Pacuta,ATHC
 ATAC_2wk_1047,2wk,T7,190,Pacuta,HTHC
 ..
 ..
-
-
 # output_file
 ..
 ..
-
 # timepoint
 Time point from sampleInfo_file to run test on (e.g. T5)
-
 # treatment1 & treatment2
 The two 'Treatment' IDs from sampleInfo_file to use for differential accumulation testing (e.g. ATAC ATHC)
-
 "
 
 args = commandArgs(trailingOnly=TRUE)
@@ -49,8 +40,8 @@ args = commandArgs(trailingOnly=TRUE)
 
 # Test if there is six arguments: if not, return an error
 if (length(args)!=2) {
-        cat(DESCRIPTION)
-        stop("Six arguments must be supplied!", call.=FALSE)
+  cat(DESCRIPTION)
+  stop("Six arguments must be supplied!", call.=FALSE)
 }
 
 
