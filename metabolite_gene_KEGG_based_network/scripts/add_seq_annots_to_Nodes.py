@@ -51,9 +51,9 @@ def main():
 	
 	logging.debug('%s', args) ## DEBUG
 	
-	reaction2gene = []
-	ortholog2gene = []
-	compound2gene = []
+	reaction2gene = {}
+	ortholog2gene = {}
+	compound2gene = {}
 	if args.reaction2gene is not None:
 		with args.reaction2gene as reaction2gene_fh:
 			reaction2gene = load_id2gene(reaction2gene_fh)
@@ -79,10 +79,8 @@ def add_seq_annots_to_Nodes(infile, outfile, reaction2gene, ortholog2gene, compo
 	'''
 	header_line = infile.readline().strip('\n')
 	headers = header_line.split(col_delim)
-	
-	reaction_index = get_header_index(headers, "kegg_id")
-	ortholog_index = get_header_index(headers, "info")
-	compound_index = get_header_index(headers, "kegg_id")
+	kegg_id_index = get_header_index(headers, "kegg_id")
+	info_index = get_header_index(headers, "info")
 	type_index = get_header_index(headers, "type")
 	
 	outfile.write(header_line + col_delim + 'gene-compound' + col_delim + 'gene-compound_ids\n')
@@ -93,24 +91,31 @@ def add_seq_annots_to_Nodes(infile, outfile, reaction2gene, ortholog2gene, compo
 		
 		## Split and get values using index
 		line_split = line.split(col_delim)
-		reaction_value = get_value_using_index(line_split, reaction_index).split(id_delim)
-		ortholog_value = get_value_using_index(line_split, ortholog_index).split(id_delim)
-		compound_value = get_value_using_index(line_split, compound_index).split(id_delim)
+		kegg_id_value = get_value_using_index(line_split, kegg_id_index).split(id_delim)
+		info_value = get_value_using_index(line_split, info_index).split(id_delim)
 		type_value = get_value_using_index(line_split, type_index)
 		
 		## Get seq/compund ids associated with node. Check which type of node we are looking and and search the right lists depending. 
 		ids_found = []
 		if type_value == "reaction":
-			for i in reaction_value:
+			for i in kegg_id_value:
 				if i in reaction2gene.keys():
 					ids_found.extend(reaction2gene[i])
-			for i in ortholog_value:
+			for i in info_value:
 				if i in ortholog2gene.keys():
 					ids_found.extend(ortholog2gene[i])
 		elif type_value == "compound":
-			for i in compound_value:
+			for i in kegg_id_value:
 				if i in compound2gene.keys():
 					ids_found.extend(compound2gene[i])
+		elif type_value == "ortholog":
+			for i in kegg_id_value:
+				if i in ortholog2gene.keys():
+					ids_found.extend(ortholog2gene[i])
+		elif type_value == "gene":
+			for i in info_value:
+				if i in ortholog2gene.keys():
+					ids_found.extend(ortholog2gene[i])
 		
 		## If we didnt find any annotations add missing to the two columns. 
 		if len(ids_found) == 0:

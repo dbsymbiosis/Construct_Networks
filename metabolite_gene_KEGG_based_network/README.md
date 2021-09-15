@@ -50,10 +50,10 @@ The below command will create `KEGG_Pathway_Networks.nodes.txt` and `KEGG_Pathwa
 
 Convert the edges [node1 <-> node2] file into a nnf formatted edge file.
 ```
-awk -F'\t' 'NR>1 {split($1,a,"__"); print "KEGG\t"a[1]"__"a[2]}' kgml/KEGG_Pathway_Networks.edges.txt | uniq > KEGG_Pathway_Networks.edges.nnf
-awk -F'\t' 'NR>1 {split($1,a,"__"); if ($1==$2) {print a[1]"__"a[2]"\t"$1} else {print a[1]"__"a[2]"\t"$1"\tflow\t"$2} }' kgml/KEGG_Pathway_Networks.edges.txt >> KEGG_Pathway_Networks.edges.nnf
 cp kgml/KEGG_Pathway_Networks.edges.txt .
 cp kgml/KEGG_Pathway_Networks.nodes.txt .
+awk -F'\t' 'NR>1 {split($1,a,"__"); print "KEGG\t"a[1]"__"a[2]}' KEGG_Pathway_Networks.edges.txt | uniq > KEGG_Pathway_Networks.edges.nnf
+awk -F'\t' 'NR>1 {split($1,a,"__"); if ($1==$2) {print a[1]"__"a[2]"\t"$1} else {print a[1]"__"a[2]"\t"$1"\tflow\t"$2} }' KEGG_Pathway_Networks.edges.txt >> KEGG_Pathway_Networks.edges.nnf
 ```
 
 ## 1. Run MAGI1

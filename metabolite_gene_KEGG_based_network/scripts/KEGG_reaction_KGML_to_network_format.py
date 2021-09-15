@@ -61,7 +61,7 @@ def KEGG_KGML_2_Cytoscape_network(kgml_file, edge_file, nodes_file):
 	
 	relation: Info about edges in the network (joining two reactions together)
 		type="ECrel": Edge joining two "reaction" entries together
-			<subtype name="compound" value="XX"/>: The "compound" entry which links the two reactions.
+~/GitHub/Construct_Networks/metabolite_gene_KEGG_based_network/scripts/KEGG_reaction_KGML_to_network_format.py			<subtype name="compound" value="XX"/>: The "compound" entry which links the two reactions.
 		type="maplink": Link to another map
 	
 	reaction: Info about the direction/substrate(s)/product(s) of a reaction
@@ -178,13 +178,13 @@ def parse_entry(entry):
 	soup = BeautifulSoup(html_text, 'html.parser')
 	
 	## Get table(s) from html
-	table = soup.find(lambda tag: tag.name=='table')
-	
-	## Check that we actually found a table. If we dont then we probabily have an incorrect URL or the entry doesn't have the info we are after. 
-	if table is None:
+	tables = soup.findAll(lambda tag: tag.name=='table')
+	## Check that we actually found some tables. If we didnt then we probabily have an incorrect URL or the entry doesn't have the info we are after.
+	if not tables: # True if empty
 		logging.info('No table found on KEGG website for entry "%s"', entry.attrib['name']) ## INFO
 		logging.info('URL: "%s"', url) ## INFO
 		return [entry.attrib['id'], entry.attrib['name'], '-', entry.attrib['type'], '-', '-', x_loc, y_loc, width, height, shape]
+	table = tables[0]
 	
 	## Split master table into rows (whole webpage is a table so we have to access table within a cell of a table)
 	master_rows = table.findAll(lambda tag: tag.name=='tr')
@@ -206,16 +206,28 @@ def parse_entry(entry):
 	
 	## type="reaction": Get "Enzyme" from KEGG database.
 	elif entry.attrib['type'] == 'reaction':
-		# Iterate over rows and check if we have found the correct rows (have to also strip \n and \xa0 characters from string).
-		for row in rows:
-			row_name = "" if len(row.findAll('th')) == 0 else row.findAll('th')[0].get_text().strip().replace(u'\xa0', u' ')
-			if row_name == 'Enzyme':
+		name_list = []
+		info_list = []
+		for table in tables:
+			master_rows = table.findAll(lambda tag: tag.name=='tr')
+			try:
+				rows = master_rows[0].findAll('td')[0].findAll('tr')[1].findAll('td')[0].findAll('tr')
+			except IndexError:
+				continue
+			# Iterate over rows and check if we have found the correct rows (have to also strip \n and \xa0 characters from string).
+			for row in rows:
+				row_name = "" if len(row.findAll('th')) == 0 else row.findAll('th')[0].get_text().strip().replace(u'\xa0', u' ')
 				row_value = "" if len(row.findAll('td')) == 0 else row.findAll('td')[0].get_text().strip().replace(u'\xa0', u' ')
-				name = ';'.join(row_value.split()) # Remove large blocks of white space between multiple IDs
-			if row_name == 'Orthology':
-				row_value = "" if len(row.findAll('td')) == 0 else row.findAll('tr') # Get Orthology rows
-				info = ';'.join([x.get_text().strip().replace(u'\xa0', u' ').split(' ')[0] for x in row_value]) # Get row text, clean it, then split and take first work (which is 'K' ID)
+				if row_name == 'Entry' and 'RClass' in row_value:
+					break
+				if row_name == 'Enzyme':
+					name_list.extend(row_value.split()) # Remove large blocks of white space between multiple IDs
+				if row_name == 'Orthology':
+					tmp_value = "" if len(row.findAll('td')) == 0 else row.findAll('tr') # Get Orthology rows
+					info_list.extend([x.get_text().strip().replace(u'\xa0', u' ').split(' ')[0] for x in tmp_value]) # Get row text, clean it, then split and take first work (which is 'K' ID)
 		## KEGG reaction ID examples: rn:R05071 rc:RC00837 (split by space and need to lstrip "rn:")
+		name = ';'.join(set(name_list))
+		info = ';'.join(set(info_list))
 		return [entry.attrib['id'], entry.attrib['name'].split(' ')[0].lstrip("rn:"), name, entry.attrib['type'], info, entry.attrib['link'], x_loc, y_loc, width, height, shape]
 	
 	## type="map": Get "Name" (first if multiple) from KEGG database.
@@ -232,6 +244,19 @@ def parse_entry(entry):
 	
 	## type="gene": Get "Name" (first if multiple) from KEGG database.
 	elif entry.attrib['type'] == 'gene':
+		ids4info = []
+		for table in tables:
+			master_rows = table.findAll(lambda tag: tag.name=='tr')
+			try:
+				rows = master_rows[0].findAll('td')[0].findAll('tr')[1].findAll('td')[0].findAll('tr')
+			except IndexError:
+				continue
+			for row in rows:
+				row_name = "" if len(row.findAll('th')) == 0 else row.findAll('th')[0].get_text().strip().replace(u'\xa0', u' ')
+				if row_name == 'KO':
+					row_value = "" if len(row.findAll('td')) == 0 else row.findAll('td')[0].get_text().strip().replace(u'\xa0', u' ')
+					ids4info.append(row_value.split(' ')[0])
+		info = ';'.join(set(ids4info))
 		return [entry.attrib['id'], entry.attrib['name'], graphics_name, entry.attrib['type'], info, entry.attrib['link'], x_loc, y_loc, width, height, shape]
 	
 	## type="ortholog": Get "Name" (first if multiple) from KEGG database.
@@ -243,7 +268,8 @@ def parse_entry(entry):
 			if row_name == 'Definition':
 				row_value = "" if len(row.findAll('td')) == 0 else row.findAll('td')[0].get_text().strip().replace(u'\xa0', u' ')
 				name = row_value
-		return [entry.attrib['id'], entry.attrib['name'], name, entry.attrib['type'], info, entry.attrib['link'], x_loc, y_loc, width, height, shape]
+		kegg_id = ';'.join([x.lstrip('ko:') for x in entry.attrib['name'].split(' ')])
+		return [entry.attrib['id'], kegg_id, name, entry.attrib['type'], info, entry.attrib['link'], x_loc, y_loc, width, height, shape]
 	
 	## If we didnt account for something
 	else:
