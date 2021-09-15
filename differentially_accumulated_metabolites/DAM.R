@@ -48,7 +48,7 @@ args = commandArgs(trailingOnly=TRUE)
 #args <- c("MC_Neg_ATAC_vs_HTAC.csv.filtered.csv", "Mcap_Sample_Info.csv", "DAM_Neg_T5_ATAC_vs_HTAC", "T5", "ATAC", "HTAC")
 
 # Test if there is six arguments: if not, return an error
-if (length(args)!=2) {
+if (length(args)!=6) {
         cat(DESCRIPTION)
         stop("Six arguments must be supplied!", call.=FALSE)
 }
