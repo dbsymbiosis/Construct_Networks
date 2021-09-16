@@ -10,8 +10,8 @@ R script to identify metabolites that are differentially accumulated between two
 ## Example:
 Rscript DAM_withoutWeightNorm.R metabolites_file samplesInfo_file output_file treatment1 treatment2
 
-# metabolites_file (comma delimited; first row needs to be the column names; sample IDs in first row should match those in the 'Sample.ID' columns in the samplesInfo_file):
-groupId,goodPeakCount,medMz,medRt,maxQuality,compoundId,ATAC_2wk_1058,ATAC_2wk_1455,ATAC_2wk_1499
+# metabolites_file (tab delimited; first row needs to be the column names; sample IDs in first row should match those in the 'Sample.ID' columns in the samplesInfo_file):
+groupId	goodPeakCount	medMz	medRt	maxQuality	compoundId	ATAC_2wk_1058	ATAC_2wk_1455	ATAC_2wk_1499
 1	5	156.001175	1.182	0.738764	156.001175@1.181877	145133.81	89625.4	94933.16
 2	3	133.014267	16.027	0.756112	133.014267@16.027122	57118.36	14854.14	22026.89
 3	41	132.867844	6.946	0.718885	132.867844@6.945603	128486.34	182182.98	176913.56
