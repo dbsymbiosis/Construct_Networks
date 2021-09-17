@@ -53,6 +53,7 @@ if (length(args)!=5) {
 # Parse command line arguments
 metabolites=read.table(args[1],h=T,row.names=1,sep="\t",check.names=F)
 samplesInfo=read.table(args[2],h=T,sep="\t")
+rownames(samplesInfo) <- samplesInfo$Sample.ID
 outputfile=args[3]
 Treatment1=args[5]
 Treatment2=args[6]
@@ -61,8 +62,8 @@ Treatment2=args[6]
 T1.samples=samplesInfo[which(samplesInfo$Treatment==Treatment1),]
 T2.samples=samplesInfo[which(samplesInfo$Treatment==Treatment2),]
 
-T1.metabolites=metabolites[,T1.samples$Sample.ID]
-T2.metabolites=metabolites[,T2.samples$Sample.ID]
+T1.metabolites=metabolites[,rownames(T1.samples)]
+T2.metabolites=metabolites[,rownames(T2.samples)]
 
 # Keep rows which have at least 1 sample that is > 0
 t1=rownames(data.frame(which(rowSums(T1.metabolites>0)>0)))
